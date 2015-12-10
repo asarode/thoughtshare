@@ -35,5 +35,7 @@ defmodule Thoughtshare.Endpoint do
     key: "_thoughtshare_key",
     signing_salt: "1zm/R8jV"
 
+  # Plug CORS handler before router
+  plug Corsica, origins: "*", allow_headers: ["content-type", "authorization"]
   plug Thoughtshare.Router
 end

@@ -1,6 +1,6 @@
 defmodule Thoughtshare.Cyphers do
 
-  def fetch_node_by_id (info) do
+  def fetch_post_by_id (info) do
     %{"id" => id} = info
 
     """
@@ -30,9 +30,24 @@ defmodule Thoughtshare.Cyphers do
       MATCH (parent:POST)
       WITH parent
       WHERE parent.id = \"#{parent_id}\"
-      CREATE path = (child:POST {title: \"#{title}\", link: \"#{link}\"
+      CREATE path = (child:POST {title: \"#{title}\", link: \"#{link}\",
         ups: "1", downs: "0", id: \"#{child_id}\"})-[:RELATED_TO]->(parent)
       RETURN path;
     """
+  end
+
+  def fetch_user_by_id (info) do
+    %{"id" => id} = info
+
+    """
+      MATCH (usr:USER)
+      WHERE usr.id = \"#{id}\"
+      RETURN usr;
+    """
+  end
+
+  def create_user (info) do
+    %{"email" => email, "password" => password} = info
+
   end
 end

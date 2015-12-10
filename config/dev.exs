@@ -32,7 +32,6 @@ config :logger, :console, format: "[$level] $message\n"
 # and calculating stacktraces is usually expensive.
 config :phoenix, :stacktrace_depth, 20
 
-# Configure your database
 config :thoughtshare, Thoughtshare.Repo,
   adapter: Ecto.Adapters.Postgres,
   username: "postgres",
@@ -41,10 +40,19 @@ config :thoughtshare, Thoughtshare.Repo,
   hostname: "localhost",
   pool_size: 10
 
-# Configure Neo4j server endpoint
 config :neo4j_sips, Neo4j,
   url: "http://localhost:7474",
   pool_size: 5,
   max_overflow: 2,
   timeout: 30,
+  # basic_auth: [username: "neo4j", password: "@Nvil2013"]
   basic_auth: [username: System.get_env("NEO4J_USERNAME"), password: System.get_env("NEO4J_PASSWORD")]
+
+config :joken, config_module: Guardian.JWT
+
+config :guardian, Guardian,
+      issuer: "MyApp",
+      ttl: { 30, :days },
+      verify_issuer: true,
+      secret_key: "wd9v3wn3vdil0indjq2v0i",
+      serializer: Thoughtshare.GuardianSerializer

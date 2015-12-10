@@ -4,7 +4,7 @@ defmodule Thoughtshare.Mixfile do
   def project do
     [app: :thoughtshare,
      version: "0.0.1",
-     elixir: "~> 1.0",
+     elixir: "~> 1.1",
      elixirc_paths: elixirc_paths(Mix.env),
      compilers: [:phoenix] ++ Mix.compilers,
      build_embedded: Mix.env == :prod,
@@ -19,7 +19,7 @@ defmodule Thoughtshare.Mixfile do
   def application do
     [mod: {Thoughtshare, []},
      applications: [:phoenix, :phoenix_html, :cowboy, :logger,
-                    :phoenix_ecto, :postgrex, :neo4j_sips]]
+                    :phoenix_ecto, :postgrex, :neo4j_sips, :comeonin]]
   end
 
   # Specifies which paths to compile per environment.
@@ -36,8 +36,11 @@ defmodule Thoughtshare.Mixfile do
      {:phoenix_html, "~> 2.1"},
      {:phoenix_live_reload, "~> 1.0", only: :dev},
      {:cowboy, "~> 1.0"},
-     {:neo4j_sips, "~> 0.1"},
-     {:uuid, "~> 1.1"}]
+     {:neo4j_sips, git: "https://github.com/florinpatrascu/neo4j_sips.git", branch: "model_intro"},
+     {:uuid, "~> 1.1"},
+     {:guardian, "~>0.6.0"},
+     {:comeonin, "~> 1.6"},
+     {:corsica, "~> 0.4"}]
   end
 
   # Aliases are shortcut or tasks specific to the current project.
