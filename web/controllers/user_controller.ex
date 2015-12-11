@@ -1,54 +1,74 @@
 defmodule Thoughtshare.UserController do
   use Thoughtshare.Web, :controller
+  alias Neo4j.Sips.Model.FindQueryGenerator
   alias Thoughtshare.User
   alias Thoughtshare.Cyphers
   alias Neo4j.Sips, as: Neo4j
   alias Comeonin.Bcrypt
 
-  def index(conn, %{"id" => user_id}) do
-    User.find(id: user_id)
+  def index(conn, params) do
+    case params do
+      %{"limit" => limit, "skip" => skip} -> query = FindQueryGenerator.query_with_properties User, control_clauses: %{limit: limit, skip: skip}
+      %{"limit" => limit} -> query = FindQueryGenerator.query_with_properties User, control_clauses: %{limit: limit, skip: 0}
+      _ -> query = FindQueryGenerator.query_with_properties User, control_clauses: %{limit: 10, skip: 0}
+    end
+
+    {:ok, users} = Neo4j.query(Neo4j.conn, query)
+
+    user_objects = Enum.map(users, fn(user) ->
+      %{
+        type: "users",
+        id: user["n"]["_id"],
+        attributes: %{
+          username: user["n"]["username"]
+        }
+      }
+    end)
+
+    res = %{
+      links: %{
+        self: "http://localhost:4000/users"
+      },
+      data: user_objects
+    }
+
+    json conn |> put_status(200), res
   end
 
   def show(conn, %{"id" => user_id}) do
-    # %{"id" => user_id} = params
-    # fetch_user_by_id_cypher = """
-    #   MATCH (user:USER)
-    #   WHERE user.id = \"#{user_id}\"
-    #   RETURN user;
-    # """
-    # {:ok, fetch_res} = Neo4j.tx_commit(Neo4j.conn, fetch_user_by_id_cypher)
-
-    {:ok, user} = User.find(id: user_id)
+    {:ok, users} = User.find(_id: user_id)
+    user = List.first(users)
 
     created_thoughts_cypher = """
-      MATCH (user:USER {id: #{user_id}})
+      MATCH (user:User {_id: \"#{user_id}\"})
       WITH user
-      MATCH (user)<-[:CREATED_BY]-(thought:THOUGHT)
-      RETURN collect(id: thought.id)
+      MATCH (user)<-[:CREATED_BY]-(thought:Thought)
+      RETURN collect({id: thought._id})
     """
-    {:ok, created_thoughts} = Neo4j.query(Nero4j.conn, created_thoughts_cypher)
+    {:ok, created_thoughts_raw} = Neo4j.query(Neo4j.conn, created_thoughts_cypher)
 
+    %{"collect({id: thought._id})" => created_thoughts} = List.first(created_thoughts_raw)
 
     thought_resource_identifiers = Enum.map(created_thoughts, fn(thought) ->
       %{
         links: %{
-          self: "http://localhost:4000/thoughts/#{thought.id}"
+          self: "http://localhost:4000/thoughts/#{thought._id}"
         },
-        data: %{ type: "thoughts", id: "#{thought.id}" }
+        data: %{ type: "thoughts", id: "#{thought._id}" }
       }
-    )
+    end)
 
     res = %{
       links: %{
-        self: "http://localhost:4000/api/v2/users/#{user.id}"
+        self: "http://localhost:4000/api/v2/users/#{user._id}"
       },
       data: %{
         type: "users",
-        id: "#{user.id}",
+        id: "#{user._id}",
         attributes: %{
           username: "#{user.username}",
           email: "#{user.email}",
-          user_since: "#user.created_at"
+          user_since: "#{user.created_at}"
         },
         relationships: %{
           thoughts: thought_resource_identifiers
@@ -56,38 +76,24 @@ defmodule Thoughtshare.UserController do
       }
     }
 
-    json conn |> put_status(200), res}
+    json conn |> put_status(200), res
   end
 
   def create(conn, params) do
     %{"username" => username, "email" => email, "password" => password} = params
-    # check_exists_cypher = """
-    #   MATCH (user:USER)
-    #   WHERE user.username = \"#{username}\" OR user.email = \"#{email}\"
-    #   RETURN user;
-    # """
-    # {:ok, check_exists_res} = Neo4j.query(Neo4j.conn, check_exists_cypher)
 
     {:ok, users_with_username} = User.find(username: username)
+    {:ok, users_with_email} = User.find(email: email)
 
-    case length(users_with_username) do
-      0 -> json conn |> put_status(201) save_user(params)
-      _ -> json conn |> put_status(409) username_exists(username)
+    if length(users_with_username) > 0 do
+      json conn |> put_status(409), user_exists("username")
     end
 
-    # if length(check_exists_res) == 0 do
-    #   hashed_pw = Bcrypt.hashpwsalt(password)
-    #   user_id = UUID.uuid1()
-    #   create_user_cypher = """
-    #     CREATE (user:USER {username: \"#{username}\", email: \"#{email}\",
-    #       password: \"#{hashed_pw}\", id: \"#{user_id}\"})
-    #     RETURN user;
-    #   """
-    #   {:ok, create_res} = Neo4j.tx_commit(Neo4j.conn, create_user_cypher)
-    #   json conn |> put_status(201), %{"message" => create_res}
-    # else
-    #   json conn |> put_status(400), %{"message" => "User already exists"}
-    # end
+    if length(users_with_email) > 0 do
+      json conn |> put_status(409), user_exists("email")
+    end
+
+    json conn |> put_status(201), save_user(params)
   end
 
   defp save_user(params) do
@@ -96,18 +102,18 @@ defmodule Thoughtshare.UserController do
 
     %{
       links: %{
-        self: "http://localhost:4000/api/v2/users/#{user.id}"
+        self: "http://localhost:4000/api/v2/users/#{user._id}"
       },
-      data: %{ type: "users", id: "#{user.id}" }
+      data: %{ type: "users", id: "#{user._id}" }
     }
   end
 
-  defp username_exists(username) do
+  defp user_exists(field) do
     %{
       errors: [%{
         status: "409",
         code: "Resource already exists",
-        detail: "A user with this username already exists so they were not created."
+        detail: "A user with this #{field} already exists so they were not created."
       }]
     }
   end
