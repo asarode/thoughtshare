@@ -1,6 +1,7 @@
 defmodule Thoughtshare.AuthController do
   use Thoughtshare.Web, :controller
   alias Thoughtshare.Cyphers
+  alias Thoughtshare.User
   alias Neo4j.Sips, as: Neo4j
   alias Comeonin.Bcrypt
   alias Poison.Parser
@@ -8,25 +9,17 @@ defmodule Thoughtshare.AuthController do
   def login(conn, req) do
     %{"username" => username, "password" => password} = req
 
-    fetch_user = """
-      MATCH (user:USER)
-      WHERE user.username = \"#{username}\"
-      RETURN user;
-    """
-    {:ok, fetch_user_res} = Neo4j.query(Neo4j.conn, fetch_user)
+    {:ok, users} = User.find(username: username)
+    if length(users) == 0 do
+      json conn |> put_status(400), bad_credentials()
+    end
 
-    unless length(fetch_user_res) == 0 do
-      # Parser.parse!(~s(fetch_user_res), as: User)
-      user = hd(fetch_user_res)["user"]
-      matched = Bcrypt.checkpw(password, user["password"])
-      if matched do
+    user = List.first(users)
+    case Bcrypt.checkpw(password, user.password) do
+      true ->
         {:ok, jwt, full_claims} = Guardian.encode_and_sign(user, :token)
         json conn |> put_status(200), %{"data" => %{"token" => jwt}}
-      else
-        json conn |> put_status(400), %{"message" => "Bad username/password"}
-      end
-    else
-      json conn |> put_status(400), %{"message" => "Bad username/password"}
+      false -> json conn |> put_status(400), bad_credentials()
     end
   end
 
@@ -37,5 +30,15 @@ defmodule Thoughtshare.AuthController do
 
   def unauthenticated_api(conn, _req) do
     json conn |> put_status(401), %{"message" => "Unauthenticated request"}
+  end
+
+  defp bad_credentials do
+    %{
+      errors: [%{
+        status: "400",
+        code: "Invalid credentials",
+        detail: "The username or password you entered were not valid"
+      }]
+    }
   end
 end

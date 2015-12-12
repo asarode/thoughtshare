@@ -55,12 +55,12 @@ defmodule Thoughtshare.Router do
     get "/users", UserController, :index
     post "/users", UserController, :create
     get "/users/:id", UserController, :show
-    patch "/users/:id", UserController, :update
+    put "/users/:id", UserController, :update
 
     get "/thoughts", ThoughtController, :index
     post "/thoughts", ThoughtController, :create
     get "/thoughts/:id", ThoughtController, :show
-    patch "/thoughts/:id", ThoughtController, :update
+    put "/thoughts/:id", ThoughtController, :update
 
     get "/thoughts/:id/groups", GroupController, :index
     post "/thoughts/:id/groups", GroupController, :create

@@ -5,15 +5,13 @@ defmodule Thoughtshare.GuardianSerializer do
   alias Poison.Parser
 
   def for_token(user) do
-    %{"id" => id, "email" => email, "username" => username} = user
-
-    {:ok, Poison.encode!(%{id: id, email: email, username: username})}
+    {:ok, Poison.encode!(%{id: user._id, email: user.email, username: user.username})}
   end
   # def for_token(_), do: {:error, "Unknown resource type"}
 
   def from_token(user) do
-    {:ok, Poison.decode!(user)}
+    # {:ok, Poison.decode!(user)}
+    {:ok, %{id: user["id"], email: user["email"], username: user["username"]}}
   end
-  def from_token(_), do: {:error, "Unknown resource type"}
-
+  # def from_token(_), do: {:error, "Unknown resource type"}
 end

@@ -8,9 +8,18 @@ defmodule Thoughtshare.UserController do
 
   def index(conn, params) do
     case params do
-      %{"limit" => limit, "skip" => skip} -> query = FindQueryGenerator.query_with_properties User, control_clauses: %{limit: limit, skip: skip}
-      %{"limit" => limit} -> query = FindQueryGenerator.query_with_properties User, control_clauses: %{limit: limit, skip: 0}
-      _ -> query = FindQueryGenerator.query_with_properties User, control_clauses: %{limit: 10, skip: 0}
+      %{"limit" => limit, "skip" => skip} ->
+        query = FindQueryGenerator.query_with_properties(
+                  User,
+                  control_clauses: %{limit: limit, skip: skip})
+      %{"limit" => limit} ->
+        query = FindQueryGenerator.query_with_properties(
+                  User,
+                  control_clauses: %{limit: limit, skip: 0})
+      _ ->
+        query = FindQueryGenerator.query_with_properties(
+                  User,
+                  control_clauses: %{limit: 10, skip: 0})
     end
 
     {:ok, users} = Neo4j.query(Neo4j.conn, query)

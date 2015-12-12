@@ -1,4 +1,4 @@
-defmodule Thoughtshare.Group do
+defmodule Thoughtshare.Thought do
   use Neo4j.Sips.Model
   alias Thoughtshare.User
   alias Thoughtshare.ModelUtils
@@ -11,7 +11,6 @@ defmodule Thoughtshare.Group do
   validate_with :check_desc
 
   relationship :CREATED_BY, User
-  relationship :GROUP_ON, Group
 
   before_create :pre_create
 
@@ -26,4 +25,5 @@ defmodule Thoughtshare.Group do
   def pre_create(model) do
     ModelUtils.add_uuid(model)
   end
+
 end
