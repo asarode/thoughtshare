@@ -2,6 +2,7 @@ defmodule Thoughtshare.Group do
   use Neo4j.Sips.Model
   alias Thoughtshare.User
   alias Thoughtshare.ModelUtils
+  alias Thoughtshare.Group
 
   field :title, type: :string, required: true
   field :desc, type: :string, required: false

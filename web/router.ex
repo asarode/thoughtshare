@@ -62,10 +62,18 @@ defmodule Thoughtshare.Router do
     get "/thoughts/:id", ThoughtController, :show
     put "/thoughts/:id", ThoughtController, :update
 
-    get "/thoughts/:id/groups", GroupController, :index
-    post "/thoughts/:id/groups", GroupController, :create
+    # get "/thoughts/:id/groups", GroupController, :index
+    # post "/thoughts/:id/groups", GroupController, :create
+    get "/groups/:id/groups", GroupController, :index
+    post "/groups/:id/groups", GroupController, :create
+    get "/groups/:id", GroupController, :show
+    put "/groups/:id", GroupController, :update
 
-    get "/thoughts/:id/notes", NoteController, :index
-    post "/thoughts/:id/notes", NoteController, :create
+    # get "/thoughts/:id/notes", NoteController, :index
+    # post "/thoughts/:id/notes", NoteController, :create
+    get "/groups/:id/notes", NoteController, :index
+    post "groups/:id/notes", NoteController, :create
+    get "/notes/:id", NoteController, :show
+    put "/notes/:id", NoteController, :update
   end
 end

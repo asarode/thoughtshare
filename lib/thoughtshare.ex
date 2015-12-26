@@ -10,7 +10,7 @@ defmodule Thoughtshare do
       # Start the endpoint when the application starts
       supervisor(Thoughtshare.Endpoint, []),
       # Start the Ecto repository
-      worker(Thoughtshare.Repo, []),
+      # worker(Thoughtshare.Repo, []),
       # Here you could define other workers and supervisors as children
       # worker(Thoughtshare.Worker, [arg1, arg2, arg3]),
     ]

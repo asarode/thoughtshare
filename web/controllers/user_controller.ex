@@ -5,6 +5,7 @@ defmodule Thoughtshare.UserController do
   alias Thoughtshare.Cyphers
   alias Neo4j.Sips, as: Neo4j
   alias Comeonin.Bcrypt
+  alias Thoughtshare.GraphDB
 
   def index(conn, params) do
     case params do
@@ -45,8 +46,7 @@ defmodule Thoughtshare.UserController do
   end
 
   def show(conn, %{"id" => user_id}) do
-    {:ok, users} = User.find(_id: user_id)
-    user = List.first(users)
+    {:ok, user} = GraphDB.find_user(user_id)
 
     created_thoughts_cypher = """
       MATCH (user:User {_id: \"#{user_id}\"})
@@ -59,11 +59,12 @@ defmodule Thoughtshare.UserController do
     %{"collect({id: thought._id})" => created_thoughts} = List.first(created_thoughts_raw)
 
     thought_resource_identifiers = Enum.map(created_thoughts, fn(thought) ->
+      %{"id" => id} = thought
       %{
         links: %{
-          self: "http://localhost:4000/thoughts/#{thought._id}"
+          self: "http://localhost:4000/thoughts/#{id}"
         },
-        data: %{ type: "thoughts", id: "#{thought._id}" }
+        data: %{ type: "thoughts", id: "#{id}" }
       }
     end)
 
@@ -102,13 +103,17 @@ defmodule Thoughtshare.UserController do
       json conn |> put_status(409), user_exists("email")
     end
 
-    json conn |> put_status(201), save_user(params)
+    %{"username" => username, "email" => email, "password" => password} = params
+    {:ok, user} = GraphDB.create_user(username, email, password)
+
+    json conn |> put_status(201), user_saved(user)
   end
 
-  defp save_user(params) do
-    %{"username" => username, "email" => email, "password" => password} = params
-    {:ok, user} = User.create(username: username, email: email, password: password)
+  def update(conn, params) do
 
+  end
+
+  defp user_saved(user) do
     %{
       links: %{
         self: "http://localhost:4000/api/v2/users/#{user._id}"

@@ -1,12 +1,8 @@
 defmodule Thoughtshare.ThoughtController do
   use Thoughtshare.Web, :controller
   alias Thoughtshare.AuthController
-  alias Thoughtshare.Cyphers
-  alias Thoughtshare.Group
-  alias Thoughtshare.Thought
-  alias Thoughtshare.User
   alias Neo4j.Sips, as: Neo4j
-  alias Posion.Parser
+  alias Thoughtshare.GraphDB
 
   plug Guardian.Plug.EnsureAuthenticated,
     %{ on_failure: { AuthController, :unauthenticated_api }}
@@ -20,17 +16,15 @@ defmodule Thoughtshare.ThoughtController do
   def index(conn, params) do
     defaultControls = %{"limit" => 10, "skip" => 0}
     %{"limit" => limit, "skip" => skip} = Map.merge(defaultControls, params)
-    query = find_thought_list(limit, skip)
-
-    {:ok, thoughts} = Neo4j.query(Neo4j.conn, query)
+    {:ok, thoughts} = GraphDB.find_thought_list(limit, skip)
 
     thought_objects = Enum.map(thoughts, fn(thought) ->
       %{
         type: "thoughts",
-        id: get_thought_query_field(thought, "_id"),
+        id: thought._id,
         attributes: %{
-          title: get_thought_query_field(thought, "title"),
-          desc: get_thought_query_field(thought, "desc")
+          title: thought.title,
+          desc: thought.desc
         }
       }
     end)
@@ -53,18 +47,15 @@ defmodule Thoughtshare.ThoughtController do
   def create(conn, params) do
     %{"title" => title, "desc" => desc} = params
 
-    %{id: user_id} = Guardian.Plug.current_resource(conn)
-    {:ok, user} = User.find(_id: user_id)
-    create_res = Thought.create(title: title, desc: desc, created_by: user)
+    %{"id" => user_id} = Guardian.Plug.current_resource(conn)
+    {:ok, user} = GraphDB.find_user(user_id)
+    create_res = GraphDB.create_thought(title, desc, user)
     case create_res do
-      {:nok, nil, thought} -> json conn |> put_status(400), validation_error()
-      {:ok, thought} ->
-        res = thought
-              |> add_group_label
-              |> build_create_res
+      {:nok, nil, thought}
+        -> json conn |> put_status(400), validation_error()
+      {:ok, thought}
+        -> json conn |> put_status(201), build_create_res(thought)
     end
-
-    json conn |> put_status(201), res
   end
 
   @doc """
@@ -72,7 +63,16 @@ defmodule Thoughtshare.ThoughtController do
   it. The groups and notes are returned as object identifiers.
   """
   def show(conn, params) do
+    %{"id" => id} = params
+    {:ok, thought} = GraphDB.find_thought(id)
+    case length(thought) do
+      0 -> json conn |> put_status(404), not_found_error()
+      _ -> res = thought
+                 |> GraphDB.find_related
+                 |> build_show_res
+    end
 
+    json conn |> put_status(200), res
   end
 
   @doc """
@@ -81,29 +81,6 @@ defmodule Thoughtshare.ThoughtController do
   """
   def update(conn, params) do
 
-  end
-
-  defp find_thought_list(limit, skip) do
-    """
-    MATCH (n:Thought)
-    RETURN n
-    LIMIT #{limit}
-    SKIP #{skip};
-    """
-  end
-
-  defp get_thought_query_field(thought, field) do
-    thought["n"]["#{field}"]
-  end
-
-  defp add_group_label(thought) do
-    id = thought._id
-    query = """
-    MATCH (n:Thought {_id: \"#{id}\"})
-    SET n :Group
-    return n;
-    """
-    List.first(Neo4j.query!(Neo4j.conn, query))
   end
 
   defp validation_error() do
@@ -116,14 +93,56 @@ defmodule Thoughtshare.ThoughtController do
     }
   end
 
+  defp not_found_error() do
+    %{
+      errors: [%{
+        status: "404",
+        code: "Resource"
+      }]
+    }
+  end
+
   defp build_create_res(thought) do
-    id = get_thought_query_field(thought, "_id")
-    IO.inspect thought
+    id = thought._id
     %{
       links: %{
         self: "http://localhost:4000/api/v2/thoughts/#{id}"
       },
       data: %{ type: "thoughts", id: id }
     }
+  end
+
+  defp build_show_res({:ok, related}) do
+    %{"thought" => thought, "notes" => notes, "groups" => groups} = related
+    # %{
+    #   links: %{
+    #     self: "http://localhost:4000/api/v2/thoughts/#{thought.id}"
+    #   },
+    #   data: %{
+    #     type: "thoughts",
+    #     id: id,
+    #     attributes: %{
+    #       title: thought.title,
+    #       desc: thoughg.desc
+    #     },
+    #     relationships: %{
+    #       creator: %{
+    #         data: %{
+    #           type: "users",
+    #           id: user._id,
+    #           attributes: %{
+    #             username: user.username
+    #           }
+    #         }
+    #       },
+    #       notes: %{
+    #         data: note_objects
+    #       },
+    #       groups: %{
+    #         data: group_objects
+    #       }
+    #     }
+    #   }
+    # }
   end
 end

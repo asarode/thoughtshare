@@ -45,7 +45,6 @@ config :neo4j_sips, Neo4j,
   pool_size: 5,
   max_overflow: 2,
   timeout: 30,
-  # basic_auth: [username: "neo4j", password: "@Nvil2013"]
   basic_auth: [username: System.get_env("NEO4J_USERNAME"), password: System.get_env("NEO4J_PASSWORD")]
 
 config :joken, config_module: Guardian.JWT

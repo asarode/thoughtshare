@@ -33,7 +33,7 @@ defmodule Thoughtshare.ConnCase do
 
   setup tags do
     unless tags[:async] do
-      Ecto.Adapters.SQL.restart_test_transaction(Thoughtshare.Repo, [])
+      # Ecto.Adapters.SQL.restart_test_transaction(Thoughtshare.Repo, [])
     end
 
     :ok
