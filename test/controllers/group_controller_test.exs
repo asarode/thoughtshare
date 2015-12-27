@@ -67,11 +67,7 @@ defmodule Thoughtshare.GroupControllerTest do
       |> put_req_header("authorization", token)
       |> send_request
 
-    %{"data" => %{"id" => group_id}} = Poison.decode!(response.resp_body)
-
-    assert {:ok, group} = GraphDB.find_group(group_id), "Group was not created successfully"
-
-    %{
+    assert %{
       "links" => %{
         "self" => self_link,
         "parent" => parent_link,
@@ -87,7 +83,9 @@ defmodule Thoughtshare.GroupControllerTest do
           "created_at" => created_at
         }
       }
-    } = Poison.decode!(response.resp_body)
+    } = Poison.decode!(response.resp_body), "Invalid response body"
+
+    {:ok, group} = GraphDB.find_group(id)
 
     assert self_link == "/api/v2/groups/#{group._id}", "Invalid self link"
     assert parent_link == "/api/v2/groups/#{thought._id}", "Invalid parent link"
@@ -158,8 +156,7 @@ defmodule Thoughtshare.GroupControllerTest do
     password = TestUtils.gen_password(username)
     {:ok, user} = GraphDB.create_user(username, email, password)
     {:ok, token, _} = Guardian.encode_and_sign(user, :token)
-    {:ok, thought} = GraphDB.create_thought(@title, @desc, user)
-    {:ok, group} = GraphDB.find_group(thought._id)
+    {:ok, group} = GraphDB.create_thought(@title, @desc, user)
 
     put_body = %{
       title: @title_mod,

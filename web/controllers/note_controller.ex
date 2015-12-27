@@ -13,11 +13,12 @@ defmodule Thoughtshare.NoteController do
 
   plug Guardian.Plug.EnsureAuthenticated,
     %{ on_failure: { AuthController, :unauthenticated_api }}
-    when not action in [:index]
+    when not action in [:index, :show]
 
   def index(conn, params) do
     %{"id" => parent_id} = params
 
+    json conn |> put_status(200), %{}
   end
 
   def create(conn, params) do
@@ -31,6 +32,14 @@ defmodule Thoughtshare.NoteController do
       {:ok, note}
         -> json conn |> put_status(201), build_create_res(note, parent_id)
     end
+  end
+
+  def show(conn, params) do
+    json conn |> put_status(200), %{}
+  end
+
+  def update(conn, params) do
+    json conn |> put_status(200), %{}
   end
 
   defp build_create_res(note, parent_id) do
