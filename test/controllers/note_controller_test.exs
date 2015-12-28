@@ -74,12 +74,11 @@ defmodule Thoughtshare.NoteControllerTest do
     {:ok, token, _} = Guardian.encode_and_sign(user, :token)
     {:ok, thought} = GraphDB.create_thought(@title, @desc, user)
 
-    thought_id = thought._id
     post_body = %{
       link: @link,
       desc: @desc
     }
-    response = conn(:post, "/api/v2/groups/#{thought_id}/notes", post_body)
+    response = conn(:post, "/api/v2/groups/#{thought._id}/notes", post_body)
       |> put_req_header("authorization", token)
       |> send_request
 

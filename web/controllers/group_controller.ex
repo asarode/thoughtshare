@@ -34,8 +34,8 @@ defmodule Thoughtshare.GroupController do
   end
 
   def create(conn, params) do
-    optionalFields = %{"desc" => nil}
-    params = Map.merge(optionalFields, params)
+    optional_fields = %{"desc" => nil}
+    params = Map.merge(optional_fields, params)
     %{"id" => parent_id, "title" => title, "desc" => desc} = params
     %{"id" => user_id} = Guardian.Plug.current_resource(conn)
 
@@ -46,20 +46,18 @@ defmodule Thoughtshare.GroupController do
       {:nok, nil, group}
         -> json conn |> put_status(400), @validation_error
       {:ok, group}
-        -> json conn |> put_status(201), create_res(group, parent_id)
+        -> json conn |> put_status(201), create_res(group)
     end
   end
 
   def show(conn, params) do
     %{"id" => id} = params
-    {:ok, group} = GraphDB.find_group(id)
 
     case GraphDB.find_group(id) do
       {:ok, nil}
         -> json conn |> put_status(404), @not_found_error
       {:ok, group}
-        -> creator = group.created_by |> List.first
-           json conn |> put_status(200), show_res(group, creator)
+        -> json conn |> put_status(200), show_res(group)
     end
   end
 
@@ -107,11 +105,12 @@ defmodule Thoughtshare.GroupController do
     }
   end
 
-  defp create_res(group, parent_id) do
+  defp create_res(group) do
+    parent = group.group_on |> List.first
     %{
       links: %{
         self: "/api/v2/groups/#{group._id}",
-        parent: "/api/v2/groups/#{parent_id}",
+        parent: "/api/v2/groups/#{parent._id}",
         groups: "/api/v2/groups/#{group._id}/groups",
         notes: "/api/v2/groups/#{group._id}/notes"
       },
@@ -127,7 +126,8 @@ defmodule Thoughtshare.GroupController do
     }
   end
 
-  defp show_res(group, user) do
+  defp show_res(group) do
+    creator = group.created_by |> List.first
     %{
       links: %{
         self: "/api/v2/groups/#{group._id}",
@@ -146,9 +146,9 @@ defmodule Thoughtshare.GroupController do
           creator: %{
             data: %{
               type: "users",
-              id: user._id,
+              id: creator._id,
               attributes: %{
-                username: user.username
+                username: creator.username
               }
             }
           }

@@ -81,6 +81,10 @@ defmodule Thoughtshare.GraphDB do
     update(Group, group, fields)
   end
 
+  def update_note(note, fields) do
+    update(Note, note, fields)
+  end
+
   def update(model, object, fields) do
     model.update(object, fields)
   end
@@ -102,6 +106,11 @@ defmodule Thoughtshare.GraphDB do
 
   def find_related_groups(parent_id) do
     query = find_related_groups_cypher(parent_id)
+    Neo4j.query(Neo4j.conn, query) |> unwrap_query |> unlabel_query
+  end
+
+  def find_related_notes(parent_id) do
+    query = find_related_notes_cypher(parent_id)
     Neo4j.query(Neo4j.conn, query) |> unwrap_query |> unlabel_query
   end
 
@@ -160,6 +169,15 @@ defmodule Thoughtshare.GraphDB do
       WITH parent
       MATCH (parent)<-[:GROUP_ON]-(#{@g}:Group)
       RETURN collect(#{@g})
+    """
+  end
+
+  defp find_related_notes_cypher(id) do
+    """
+      MATCH (parent:Group {_id: \"#{id}\"})
+      WITH parent
+      MATCH (parent)<-[:NOTE_ON]-(#{@n}:Note)
+      RETURN collect(#{@n})
     """
   end
 
