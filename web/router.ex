@@ -72,7 +72,7 @@ defmodule Thoughtshare.Router do
     # get "/thoughts/:id/notes", NoteController, :index
     # post "/thoughts/:id/notes", NoteController, :create
     get "/groups/:id/notes", NoteController, :index
-    post "groups/:id/notes", NoteController, :create
+    post "/groups/:id/notes", NoteController, :create
     get "/notes/:id", NoteController, :show
     put "/notes/:id", NoteController, :update
   end

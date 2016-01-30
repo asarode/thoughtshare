@@ -18,13 +18,15 @@ defmodule Thoughtshare.ThoughtController do
     %{"limit" => limit, "skip" => skip} = Map.merge(defaultControls, params)
     {:ok, thoughts} = GraphDB.find_thought_list(limit, skip)
 
+    IO.inspect thoughts
     thought_objects = Enum.map(thoughts, fn(thought) ->
       %{
         type: "thoughts",
-        id: thought._id,
+        id: thought["_id"],
         attributes: %{
-          title: thought.title,
-          desc: thought.desc
+          title: thought["title"],
+          desc: thought["desc"],
+          created_at: thought["created_at"]
         }
       }
     end)
@@ -64,12 +66,16 @@ defmodule Thoughtshare.ThoughtController do
   """
   def show(conn, params) do
     %{"id" => id} = params
-    {:ok, thought} = GraphDB.find_thought(id)
-    case length(thought) do
-      0 -> json conn |> put_status(404), not_found_error()
-      _ -> res = thought
-                 |> GraphDB.find_related
-                 |> build_show_res
+    {:ok, thought_model} = GraphDB.find_thought(id)
+
+    case thought_model do
+      nil
+        -> json conn |> put_status(404), not_found_error()
+      _ 
+        -> 
+          {:ok, related} = GraphDB.find_related(thought_model)
+          res = Map.merge(related, %{"thought" => thought_model})
+          |> show_res
     end
 
     json conn |> put_status(200), res
@@ -80,7 +86,18 @@ defmodule Thoughtshare.ThoughtController do
   identifier for the updated resource.
   """
   def update(conn, params) do
+    %{"id" => id} = params
+    update_fields = conn.body_params |> Map.to_list
 
+    case GraphDB.find_thought(id) do
+      {:ok, nil}
+        -> json conn |> put_status(404), @not_found_error
+      {:ok, thought_model}
+        ->
+          GraphDB.update_thought(thought_model, update_fields)
+          {:ok, updated_thought_model} = GraphDB.find_thought(thought_model._id)
+          json conn |> put_status(200), update_res(updated_thought_model)
+    end
   end
 
   defp validation_error() do
@@ -97,7 +114,7 @@ defmodule Thoughtshare.ThoughtController do
     %{
       errors: [%{
         status: "404",
-        code: "Resource"
+        code: "Resource not found"
       }]
     }
   end
@@ -112,37 +129,68 @@ defmodule Thoughtshare.ThoughtController do
     }
   end
 
-  defp build_show_res({:ok, related}) do
-    %{"thought" => thought, "notes" => notes, "groups" => groups} = related
-    # %{
-    #   links: %{
-    #     self: "http://localhost:4000/api/v2/thoughts/#{thought.id}"
-    #   },
-    #   data: %{
-    #     type: "thoughts",
-    #     id: id,
-    #     attributes: %{
-    #       title: thought.title,
-    #       desc: thoughg.desc
-    #     },
-    #     relationships: %{
-    #       creator: %{
-    #         data: %{
-    #           type: "users",
-    #           id: user._id,
-    #           attributes: %{
-    #             username: user.username
-    #           }
-    #         }
-    #       },
-    #       notes: %{
-    #         data: note_objects
-    #       },
-    #       groups: %{
-    #         data: group_objects
-    #       }
-    #     }
-    #   }
-    # }
+  defp build_resource_identifier(objects, type) do
+    Enum.map(objects, fn(object) ->
+      %{
+        type: type,
+        id: object["_id"]
+      }
+    end)
+  end
+
+  defp show_res(related) do
+    %{"thought" => thought_model, "notes" => notes, "groups" => groups} = related
+    creator_model = thought_model.created_by |> List.first
+
+    %{
+      links: %{
+        self: "http://localhost:4000/api/v2/thoughts/#{thought_model._id}"
+      },
+      data: %{
+        type: "thoughts",
+        id: thought_model._id,
+        attributes: %{
+          title: thought_model.title,
+          desc: thought_model.desc,
+          created_at: thought_model.created_at
+        },
+        relationships: %{
+          creator: %{
+            data: %{
+              type: "users",
+              id: creator_model._id,
+              attributes: %{
+                username: creator_model.username
+              }
+            }
+          },
+          notes: %{
+            data: build_resource_identifier(notes, "notes")
+          },
+          groups: %{
+            data: build_resource_identifier(groups, "groups")
+          }
+        }
+      }
+    }
+  end
+
+  defp update_res(thought_model) do
+    %{
+      links: %{
+        self: "/api/v2/thoughts/#{thought_model._id}",
+        groups: "/api/v2/groups/#{thought_model._id}/groups",
+        notes: "/api/v2/groups/#{thought_model._id}/notes"
+      },
+      data: %{
+        type: "thoughts",
+        id: thought_model._id,
+        attributes: %{
+          title: thought_model.title,
+          desc: thought_model.desc,
+          created_at: thought_model.created_at
+        }
+      }
+    }
   end
 end

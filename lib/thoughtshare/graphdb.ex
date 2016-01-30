@@ -91,7 +91,11 @@ defmodule Thoughtshare.GraphDB do
 
   def find_thought_list(limit, skip) do
     query = find_thought_list_cypher(limit, skip)
-    Neo4j.query(Neo4j.conn, query)
+    {:ok, thoughts} = Neo4j.query(Neo4j.conn, query)
+    thoughts = Enum.map(thoughts, fn(thought) ->
+      thought |> unlabel_query
+    end)
+    {:ok, thoughts}
   end
 
   def append_group_label(thought) do
@@ -100,8 +104,9 @@ defmodule Thoughtshare.GraphDB do
   end
 
   def find_related(thought) do
-    query = find_related_cypher(thought._id)
-    Neo4j.query(Neo4j.conn, query)
+    {:ok, groups} = find_related_groups(thought._id)
+    {:ok, notes} = find_related_notes(thought._id)
+    {:ok, %{"groups" => groups, "notes" => notes}}
   end
 
   def find_related_groups(parent_id) do
@@ -115,12 +120,18 @@ defmodule Thoughtshare.GraphDB do
   end
 
   def unwrap_query({:ok, objects}) do
-    {:ok, List.first(objects)}
+    {:ok, unwrap_query(objects)}
+  end
+  def unwrap_query(objects) do
+    List.first objects
   end
 
   def unlabel_query({:ok, labeled_data}) do
+    {:ok, unlabel_query(labeled_data)}
+  end
+  def unlabel_query(labeled_data) do
     label = labeled_data |> Map.keys |> List.first
-    {:ok, Map.get(labeled_data, label)}
+    Map.get(labeled_data, label)
   end
 
   def atomize_query({:ok, string_map}) do
@@ -155,11 +166,11 @@ defmodule Thoughtshare.GraphDB do
 
   defp find_related_cypher(id) do
     """
-      MATCH (#{@t}:Thought {_id: \"#{id}\"})
-      WITH #{@t}
-      MATCH (#{@t})<-[:NOTE_ON]-({@n}:NOTE),
-        (#{@t})<-[:GROUP_ON]-(group:GROUP)
-      RETURN collect(#{@n}, group)
+      MATCH (parent:Group {_id: \"#{id}\"})
+      WITH parent
+      MATCH (parent)<-[:NOTE_ON]-(#{@n}:Note),
+        (#{@t})<-[:GROUP_ON]-(#{@g}:Group)
+      RETURN collect(#{@n}), collect(#{@g})
     """
   end
 
