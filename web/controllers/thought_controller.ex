@@ -20,20 +20,33 @@ defmodule Thoughtshare.ThoughtController do
 
     IO.inspect thoughts
     thought_objects = Enum.map(thoughts, fn(thought) ->
+      {:ok, thought_model} = GraphDB.find_thought(thought["_id"])
+      creator_model = thought_model.created_by |> List.first
       %{
         type: "thoughts",
-        id: thought["_id"],
+        id: thought_model._id,
         attributes: %{
-          title: thought["title"],
-          desc: thought["desc"],
-          created_at: thought["created_at"]
+          title: thought_model.title,
+          desc: thought_model.desc,
+          created_at: thought_model.created_at
+        },
+        relationships: %{
+          creator: %{
+            data: %{
+              type: "users",
+              id: creator_model._id,
+              attributes: %{
+                username: creator_model.username
+              }
+            }
+          },
         }
       }
     end)
 
     res = %{
       links: %{
-        self: "http://localhost:4000/api/v2/thoughts?limit=\"#{limit}\"&skip=\"#{skip}\""
+        self: "/api/v2/thoughts?limit=\"#{limit}\"&skip=\"#{skip}\""
       },
       data: thought_objects
     }
@@ -66,12 +79,11 @@ defmodule Thoughtshare.ThoughtController do
   """
   def show(conn, params) do
     %{"id" => id} = params
-    {:ok, thought_model} = GraphDB.find_thought(id)
 
-    case thought_model do
-      nil
+    case GraphDB.find_thought(id) do
+      {:ok, nil}
         -> json conn |> put_status(404), not_found_error()
-      _ 
+      {:ok, thought_model} 
         -> 
           {:ok, related} = GraphDB.find_related(thought_model)
           res = Map.merge(related, %{"thought" => thought_model})
@@ -123,13 +135,13 @@ defmodule Thoughtshare.ThoughtController do
     id = thought._id
     %{
       links: %{
-        self: "http://localhost:4000/api/v2/thoughts/#{id}"
+        self: "/api/v2/thoughts/#{id}"
       },
       data: %{ type: "thoughts", id: id }
     }
   end
 
-  defp build_resource_identifier(objects, type) do
+  defp build_resource_identifiers(objects, type) do
     Enum.map(objects, fn(object) ->
       %{
         type: type,
@@ -144,7 +156,7 @@ defmodule Thoughtshare.ThoughtController do
 
     %{
       links: %{
-        self: "http://localhost:4000/api/v2/thoughts/#{thought_model._id}"
+        self: "/api/v2/thoughts/#{thought_model._id}"
       },
       data: %{
         type: "thoughts",
@@ -165,10 +177,10 @@ defmodule Thoughtshare.ThoughtController do
             }
           },
           notes: %{
-            data: build_resource_identifier(notes, "notes")
+            data: build_resource_identifiers(notes, "notes")
           },
           groups: %{
-            data: build_resource_identifier(groups, "groups")
+            data: build_resource_identifiers(groups, "groups")
           }
         }
       }

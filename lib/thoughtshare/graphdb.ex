@@ -103,9 +103,9 @@ defmodule Thoughtshare.GraphDB do
     Neo4j.query(Neo4j.conn, query)
   end
 
-  def find_related(thought) do
-    {:ok, groups} = find_related_groups(thought._id)
-    {:ok, notes} = find_related_notes(thought._id)
+  def find_related(parent) do
+    {:ok, groups} = find_related_groups(parent._id)
+    {:ok, notes} = find_related_notes(parent._id)
     {:ok, %{"groups" => groups, "notes" => notes}}
   end
 

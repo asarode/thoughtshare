@@ -56,9 +56,14 @@ defmodule Thoughtshare.GroupController do
     case GraphDB.find_group(id) do
       {:ok, nil}
         -> json conn |> put_status(404), @not_found_error
-      {:ok, group}
-        -> json conn |> put_status(200), show_res(group)
+      {:ok, group_model}
+        ->
+          {:ok, related} = GraphDB.find_related(group_model)
+          res = Map.merge(related, %{"parent" => group_model})
+            |> show_res
     end
+
+    json conn |> put_status(200), res
   end
 
   def update(conn, params) do
@@ -126,31 +131,48 @@ defmodule Thoughtshare.GroupController do
     }
   end
 
-  defp show_res(group) do
-    creator = group.created_by |> List.first
+  defp build_resource_identifiers(objects, type) do
+    Enum.map(objects, fn(object) ->
+      %{
+        type: type,
+        id: object["_id"]
+      }
+    end)
+  end
+
+  defp show_res(related) do
+    %{"parent" => parent_model, "notes" => notes, "groups" => groups} = related
+    creator_model = parent_model.created_by |> List.first
+
     %{
       links: %{
-        self: "/api/v2/groups/#{group._id}",
-        groups: "/api/v2/groups/#{group._id}/groups",
-        notes: "/api/v2/groups/#{group._id}/notes"
+        self: "/api/v2/groups/#{parent_model._id}",
+        groups: "/api/v2/groups/#{parent_model._id}/groups",
+        notes: "/api/v2/groups/#{parent_model._id}/notes"
       },
       data: %{
         type: "groups",
-        id: group._id,
+        id: parent_model._id,
         attributes: %{
-          title: group.title,
-          desc: group.desc,
-          created_at: group.created_at
+          title: parent_model.title,
+          desc: parent_model.desc,
+          created_at: parent_model.created_at
         },
         relationships: %{
           creator: %{
             data: %{
               type: "users",
-              id: creator._id,
+              id: creator_model._id,
               attributes: %{
-                username: creator.username
+                username: creator_model.username
               }
             }
+          },
+          notes: %{
+            data: build_resource_identifiers(notes, "notes")
+          },
+          groups: %{
+            data: build_resource_identifiers(groups, "groups")
           }
         }
       }
