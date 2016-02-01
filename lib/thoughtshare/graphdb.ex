@@ -103,9 +103,9 @@ defmodule Thoughtshare.GraphDB do
     Neo4j.query(Neo4j.conn, query)
   end
 
-  def find_related(parent) do
-    {:ok, groups} = find_related_groups(parent._id)
-    {:ok, notes} = find_related_notes(parent._id)
+  def find_related(id) do
+    {:ok, groups} = find_related_groups(id)
+    {:ok, notes} = find_related_notes(id)
     {:ok, %{"groups" => groups, "notes" => notes}}
   end
 
@@ -117,6 +117,17 @@ defmodule Thoughtshare.GraphDB do
   def find_related_notes(parent_id) do
     query = find_related_notes_cypher(parent_id)
     Neo4j.query(Neo4j.conn, query) |> unwrap_query |> unlabel_query
+  end
+
+  def find_parent(self_id) do
+    query = find_parent_cypher(self_id)
+    IO.inspect Neo4j.query(Neo4j.conn, query)
+    case Neo4j.query(Neo4j.conn, query) do
+      {:ok, []}
+        -> {:ok, nil}
+      parent
+        -> parent |> unwrap_query |> unlabel_query
+    end
   end
 
   def unwrap_query({:ok, objects}) do
@@ -189,6 +200,15 @@ defmodule Thoughtshare.GraphDB do
       WITH parent
       MATCH (parent)<-[:NOTE_ON]-(#{@n}:Note)
       RETURN collect(#{@n})
+    """
+  end
+
+  defp find_parent_cypher(id) do
+    """
+      MATCH (self:Group {_id: \"#{id}\"})
+      WITH self
+      MATCH (self)-[:GROUP_ON]->(parent:Group)
+      RETURN parent
     """
   end
 

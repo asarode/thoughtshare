@@ -58,8 +58,9 @@ defmodule Thoughtshare.GroupController do
         -> json conn |> put_status(404), @not_found_error
       {:ok, group_model}
         ->
-          {:ok, related} = GraphDB.find_related(group_model)
-          res = Map.merge(related, %{"parent" => group_model})
+          {:ok, related} = GraphDB.find_related(group_model._id)
+          {:ok, parent} = GraphDB.find_parent(group_model._id)
+          res = Map.merge(related, %{"self" => group_model, "parent" => parent})
             |> show_res
     end
 
@@ -89,6 +90,9 @@ defmodule Thoughtshare.GroupController do
 
   defp index_res(groups, parent_id) do
     group_objects = Enum.map(groups, fn(group) ->
+      {:ok, group_model} = GraphDB.find_group(group["_id"])
+      creator_model = group_model.created_by |> List.first
+
       %{
         type: "groups",
         id: group["_id"],
@@ -96,6 +100,17 @@ defmodule Thoughtshare.GroupController do
           title: group["title"],
           desc: group["desc"],
           created_at: group["created_at"]
+        },
+        relationships: %{
+          creator: %{
+            data: %{
+              type: "users",
+              id: creator_model._id,
+              attributes: %{
+                username: creator_model.username
+              }
+            }
+          }
         }
       }
     end)
@@ -140,23 +155,34 @@ defmodule Thoughtshare.GroupController do
     end)
   end
 
-  defp show_res(related) do
-    %{"parent" => parent_model, "notes" => notes, "groups" => groups} = related
-    creator_model = parent_model.created_by |> List.first
-
+  defp show_res(data) do
+    %{
+      "self" => self_model,
+      "parent" => parent,
+      "notes" => notes,
+      "groups" => groups
+    } = data
+    creator_model = self_model.created_by |> List.first
+    case parent do
+      nil
+        -> parent_link = nil
+      _
+        -> parent_link = "/api/v2/groups/#{parent["_id"]}"
+    end
     %{
       links: %{
-        self: "/api/v2/groups/#{parent_model._id}",
-        groups: "/api/v2/groups/#{parent_model._id}/groups",
-        notes: "/api/v2/groups/#{parent_model._id}/notes"
+        self: "/api/v2/groups/#{self_model._id}",
+        parent: parent_link,
+        groups: "/api/v2/groups/#{self_model._id}/groups",
+        notes: "/api/v2/groups/#{self_model._id}/notes"
       },
       data: %{
         type: "groups",
-        id: parent_model._id,
+        id: self_model._id,
         attributes: %{
-          title: parent_model.title,
-          desc: parent_model.desc,
-          created_at: parent_model.created_at
+          title: self_model.title,
+          desc: self_model.desc,
+          created_at: self_model.created_at
         },
         relationships: %{
           creator: %{
