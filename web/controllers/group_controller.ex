@@ -165,9 +165,13 @@ defmodule Thoughtshare.GroupController do
     creator_model = self_model.created_by |> List.first
     case parent do
       nil
-        -> parent_link = nil
+        ->
+          parent_link = nil
+          parent_data = nil
       _
-        -> parent_link = "/api/v2/groups/#{parent["_id"]}"
+        ->
+          parent_link = "/api/v2/groups/#{parent["_id"]}"
+          parent_data = %{type: "groups", id: parent["_id"]}
     end
     %{
       links: %{
@@ -199,6 +203,9 @@ defmodule Thoughtshare.GroupController do
           },
           groups: %{
             data: build_resource_identifiers(groups, "groups")
+          },
+          parent: %{
+            data: parent_data
           }
         }
       }
