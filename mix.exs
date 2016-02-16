@@ -40,7 +40,8 @@ defmodule Thoughtshare.Mixfile do
      {:uuid, "~> 1.1"},
      {:guardian, "~>0.6.0"},
      {:comeonin, "~> 1.6"},
-     {:corsica, "~> 0.4"}]
+     {:corsica, "~> 0.4"},
+     { :exrm, "~> 0.19.9" }]
   end
 
   # Aliases are shortcut or tasks specific to the current project.

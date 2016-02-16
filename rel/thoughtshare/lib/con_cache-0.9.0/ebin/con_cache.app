@@ -1,0 +1,13 @@
+{application,con_cache,
+             [{registered,[]},
+              {description,"ETS based key-value storage with support for row-level isolated writes, TTL auto-purge, and modification callbacks."},
+              {applications,[kernel,stdlib,elixir,logger,exactor]},
+              {mod,{'Elixir.ConCache.Application',[]}},
+              {vsn,"0.9.0"},
+              {modules,['Elixir.ConCache','Elixir.ConCache.Application',
+                        'Elixir.ConCache.BalancedLock','Elixir.ConCache.Item',
+                        'Elixir.ConCache.Lock',
+                        'Elixir.ConCache.Lock.Monitors',
+                        'Elixir.ConCache.Lock.Resource',
+                        'Elixir.ConCache.Operations','Elixir.ConCache.Owner',
+                        'Elixir.ConCache.Registry']}]}.

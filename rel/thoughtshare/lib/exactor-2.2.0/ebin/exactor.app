@@ -1,0 +1,12 @@
+{application,exactor,
+             [{registered,[]},
+              {description,"Simplified creation of GenServer based processes in Elixir."},
+              {applications,[kernel,stdlib,elixir,logger]},
+              {vsn,"2.2.0"},
+              {modules,['Elixir.ExActor.Behaviour.Strict',
+                        'Elixir.ExActor.Behaviour.Tolerant',
+                        'Elixir.ExActor.Delegator','Elixir.ExActor.Empty',
+                        'Elixir.ExActor.GenServer','Elixir.ExActor.Helper',
+                        'Elixir.ExActor.Operations',
+                        'Elixir.ExActor.Responders','Elixir.ExActor.Strict',
+                        'Elixir.ExActor.Tolerant']}]}.

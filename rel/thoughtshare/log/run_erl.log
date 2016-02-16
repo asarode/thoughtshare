@@ -1,0 +1,8 @@
+run_erl [11046] Mon Feb 15 12:18:51 2016
+Args before exec of shell:
+run_erl [11046] Mon Feb 15 12:18:51 2016
+argv[0] = sh
+run_erl [11046] Mon Feb 15 12:18:51 2016
+argv[1] = -c
+run_erl [11046] Mon Feb 15 12:18:51 2016
+argv[2] = exec "/Users/arjunsarode/wrk/thoughtshare/rel/thoughtshare/bin/thoughtshare" "console"
