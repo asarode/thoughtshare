@@ -1,7 +1,6 @@
 {application,phoenix_ecto,
              [{registered,[]},
               {description,"Integration between Phoenix & Ecto"},
-              {applications,[kernel,stdlib,elixir,logger,ecto]},
               {vsn,"1.2.0"},
               {modules,['Elixir.Phoenix.Ecto',
                         'Elixir.Phoenix.HTML.FormData.Ecto.Changeset',
@@ -12,4 +11,5 @@
                         'Elixir.Plug.Exception.Ecto.CastError',
                         'Elixir.Plug.Exception.Ecto.NoResultsError',
                         'Elixir.Poison.Encoder.Ecto.Association.NotLoaded',
-                        'Elixir.Poison.Encoder.Ecto.Changeset']}]}.
+                        'Elixir.Poison.Encoder.Ecto.Changeset']},
+              {applications,[kernel,stdlib,elixir,logger,ecto]}]}.

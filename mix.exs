@@ -19,7 +19,8 @@ defmodule Thoughtshare.Mixfile do
   def application do
     [mod: {Thoughtshare, []},
      applications: [:phoenix, :phoenix_html, :cowboy, :logger,
-                    :phoenix_ecto, :postgrex, :neo4j_sips, :comeonin]]
+                    :phoenix_ecto, :postgrex, :neo4j_sips, :comeonin,
+                    :corsica, :guardian, :uuid]]
   end
 
   # Specifies which paths to compile per environment.

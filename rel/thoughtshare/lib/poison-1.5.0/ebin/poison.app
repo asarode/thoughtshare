@@ -1,7 +1,6 @@
 {application,poison,
              [{registered,[]},
               {description,"An experimental Elixir JSON library"},
-              {applications,[kernel,stdlib,elixir]},
               {vsn,"1.5.0"},
               {modules,['Elixir.Poison','Elixir.Poison.Decode',
                         'Elixir.Poison.Decoder','Elixir.Poison.Decoder.Any',
@@ -17,4 +16,5 @@
                         'Elixir.Poison.Encoder.Map',
                         'Elixir.Poison.Encoder.Range',
                         'Elixir.Poison.Encoder.Stream','Elixir.Poison.Parser',
-                        'Elixir.Poison.Pretty','Elixir.Poison.SyntaxError']}]}.
+                        'Elixir.Poison.Pretty','Elixir.Poison.SyntaxError']},
+              {applications,[kernel,stdlib,elixir]}]}.

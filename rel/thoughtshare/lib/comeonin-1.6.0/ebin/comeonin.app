@@ -1,7 +1,6 @@
 {application,comeonin,
              [{registered,[]},
               {description,"Password hashing (bcrypt, pbkdf2_sha512) library for Elixir.\n"},
-              {applications,[kernel,stdlib,elixir,crypto,logger]},
               {vsn,"1.6.0"},
               {modules,['Elixir.Comeonin','Elixir.Comeonin.Bcrypt',
                         'Elixir.Comeonin.Bcrypt.Base64',
@@ -11,4 +10,5 @@
                         'Elixir.Comeonin.Password.Tools',
                         'Elixir.Comeonin.Pbkdf2',
                         'Elixir.Comeonin.Pbkdf2.Base64',
-                        'Elixir.Comeonin.Tools']}]}.
+                        'Elixir.Comeonin.Tools']},
+              {applications,[kernel,stdlib,elixir,crypto,logger]}]}.

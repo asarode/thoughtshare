@@ -14,11 +14,11 @@ use Mix.Config
 config :thoughtshare, Thoughtshare.Endpoint,
   http: [port: 4000],
   url: [host: "alpha.grokstuff.com"],
-  cache_static_manifest: "priv/static/manifest.json",
+  # cache_static_manifest: "priv/static/manifest.json",
   server: true
 
 config :neo4j_sips, Neo4j,
-  url: "http://localhost:7474",
+  url: "http://alpha.grokstuff.com:7474",
   pool_size: 5,
   max_overflow: 2,
   timeout: 30

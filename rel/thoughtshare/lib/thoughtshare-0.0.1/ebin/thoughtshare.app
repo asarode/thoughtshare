@@ -1,10 +1,6 @@
 {application,thoughtshare,
              [{registered,[]},
               {description,"thoughtshare"},
-              {mod,{'Elixir.Thoughtshare',[]}},
-              {applications,[kernel,stdlib,elixir,phoenix,phoenix_html,cowboy,
-                             logger,phoenix_ecto,postgrex,neo4j_sips,
-                             comeonin]},
               {vsn,"0.0.1"},
               {modules,['Elixir.Thoughtshare',
                         'Elixir.Thoughtshare.AuthController',
@@ -30,4 +26,8 @@
                         'Elixir.Thoughtshare.User',
                         'Elixir.Thoughtshare.UserController',
                         'Elixir.Thoughtshare.UserSocket',
-                        'Elixir.Thoughtshare.Web']}]}.
+                        'Elixir.Thoughtshare.Web']},
+              {mod,{'Elixir.Thoughtshare',[]}},
+              {applications,[kernel,stdlib,elixir,phoenix,phoenix_html,cowboy,
+                             logger,phoenix_ecto,postgrex,neo4j_sips,comeonin,
+                             corsica,guardian,uuid]}]}.

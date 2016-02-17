@@ -1,9 +1,6 @@
 {application,neo4j_sips,
              [{registered,[]},
               {description,"A very simple and versatile Neo4J Elixir driver"},
-              {applications,[kernel,stdlib,elixir,logger,httpoison,poison,
-                             inflex,con_cache]},
-              {mod,{'Elixir.Neo4j.Sips',[]}},
               {vsn,"0.1.20"},
               {modules,['Elixir.Neo4j.Sips','Elixir.Neo4j.Sips.Connection',
                         'Elixir.Neo4j.Sips.Cypher',
@@ -39,4 +36,7 @@
                         'Elixir.Neo4j.Sips.Server',
                         'Elixir.Neo4j.Sips.Server.ServerData',
                         'Elixir.Neo4j.Sips.Transaction',
-                        'Elixir.Neo4j.Sips.Utils']}]}.
+                        'Elixir.Neo4j.Sips.Utils']},
+              {applications,[kernel,stdlib,elixir,logger,httpoison,poison,
+                             inflex,con_cache]},
+              {mod,{'Elixir.Neo4j.Sips',[]}}]}.

@@ -1,9 +1,6 @@
 {application,postgrex,
              [{registered,[]},
               {description,"PostgreSQL driver for Elixir."},
-              {applications,[kernel,stdlib,elixir,logger]},
-              {mod,{'Elixir.Postgrex',[]}},
-              {env,[{type_server_reap_after,180000}]},
               {vsn,"0.9.1"},
               {modules,['Elixir.Postgrex','Elixir.Postgrex.BinaryUtils',
                         'Elixir.Postgrex.Connection','Elixir.Postgrex.Date',
@@ -18,4 +15,7 @@
                         'Elixir.Postgrex.Timestamp',
                         'Elixir.Postgrex.TypeInfo',
                         'Elixir.Postgrex.TypeServer','Elixir.Postgrex.Types',
-                        'Elixir.Postgrex.Utils']}]}.
+                        'Elixir.Postgrex.Utils']},
+              {applications,[kernel,stdlib,elixir,logger]},
+              {mod,{'Elixir.Postgrex',[]}},
+              {env,[{type_server_reap_after,180000}]}]}.
